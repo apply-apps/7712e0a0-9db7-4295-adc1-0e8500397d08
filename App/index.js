@@ -1,53 +1,79 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+// Filename: index.js
+// Combined code from all files
+import React, { useState } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, Button, View, ActivityIndicator } from 'react-native';
+import axios from 'axios';
 
 const App = () => {
-  const fullText = 'Hi, this is Apply.\nCreating mobile apps is now as simple as typing text.\nJust input your idea and press APPLY, and our platform does the rest...';
-  const [displayedText, setDisplayedText] = useState('');
-  const [index, setIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [recipe, setRecipe] = useState(null);
 
-  useEffect(() => {
-    if (isPaused) return;
-
-    const interval = setInterval(() => {
-      setDisplayedText((prev) => prev + fullText[index]);
-      setIndex((prev) => {
-        if (prev === fullText.length - 1) {
-          setIsPaused(true);
-          setTimeout(() => {
-            setDisplayedText('');
-            setIndex(0);
-            setIsPaused(false);
-          }, 2000);
-          return 0;
+    const fetchRecipe = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.post('http://apihub.p.appply.xyz:3300/chatgpt', {
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a helpful assistant. Please provide answers for given requests."
+                    },
+                    {
+                        role: "user",
+                        content: "Can you give me a microwave mug chocolate chip cake recipe?"
+                    }
+                ],
+                model: "gpt-4o"
+            });
+            const { data } = response;
+            setRecipe(data.response);
+        } catch (error) {
+            console.error(error);
         }
-        return prev + 1;
-      });
-    }, 100);
+        setLoading(false);
+    };
 
-    return () => clearInterval(interval);
-  }, [index, isPaused]);
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>{displayedText}</Text>
-    </View>
-  );
+    return (
+        <SafeAreaView style={styles.container}>
+            <ScrollView contentContainerStyle={styles.scrollContainer}>
+                <Text style={styles.title}>Microwave Mug Chocolate Chip Cake Recipe</Text>
+                <Button title="Get Recipe" onPress={fetchRecipe} />
+                {loading && <ActivityIndicator size="large" color="#0000ff" />}
+                {recipe && (
+                    <View style={styles.recipeContainer}>
+                        <Text style={styles.recipeText}>{recipe}</Text>
+                    </View>
+                )}
+            </ScrollView>
+        </SafeAreaView>
+    );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'black',
-    padding: 20,
-  },
-  text: {
-    color: 'white',
-    fontSize: 24,
-    fontFamily: 'monospace',
-  },
+    container: {
+        flex: 1,
+        paddingTop: 20,
+        backgroundColor: '#fff',
+    },
+    scrollContainer: {
+        paddingHorizontal: 20,
+        alignItems: 'center',
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginVertical: 20,
+    },
+    recipeContainer: {
+        marginTop: 20,
+        padding: 10,
+        backgroundColor: '#f8f8f8',
+        borderRadius: 10,
+        boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+    },
+    recipeText: {
+        fontSize: 16,
+        lineHeight: 24,
+    },
 });
 
 export default App;
